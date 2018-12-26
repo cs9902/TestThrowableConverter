@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 设置log4j2的自身log级别为warn -->
+<!-- OFF > FATAL > ERROR > WARN > INFO > DEBUG > TRACE > ALL -->
+<configuration>
+    <Properties>
+        <Property name="logDir">F:/workspace_idea/TestThrowableConverter/logs</Property>
+    </Properties>
+    <appenders>
+ 
+        <RollingRandomAccessFile name="RollingFileInfo" fileName="${logDir}/debug/debug.log"
+                     filePattern="${logDir}/debug/$${date:yyyy-MM}/info-%d{yyyy-MM-dd}-%i.log">   
+            <PatternLayout>
+              <Pattern>[%d{HH:mm:ss:SSS}] [%p] - %l - %m%n - %throwableMask{full}{filters(masks(java.lang.NullPointerException|java.lang.NumberFormatException), java.lang)}%n</Pattern>
+            </PatternLayout>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="100 MB"/>
+            </Policies>
+        </RollingRandomAccessFile>
+ 
+    </appenders>
+ 
+    <loggers>
+        <logger name="com.kubeman" level="INFO">
+          <appender-ref ref="RollingFileInfo"/>
+        </logger>
+    </loggers>
+ 
+</configuration>
