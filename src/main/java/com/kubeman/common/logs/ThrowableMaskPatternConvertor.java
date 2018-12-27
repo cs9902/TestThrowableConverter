@@ -11,7 +11,6 @@ import org.apache.logging.log4j.util.Strings;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(name = "com.kubeman.common.logs.ThrowableMaskPatternConvertor", category = PatternConverter.CATEGORY)
@@ -20,17 +19,15 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
 
     private String rawOption;
 
-    private List<String> maskExceptions = new ArrayList<String>();
-
     /**
      * Constructor.
      *
      * @param name    Name of converter.
      * @param style   CSS style for output.
      * @param options options, may be null.
-     * @param config
+     * @param config config
      */
-    protected ThrowableMaskPatternConvertor(final String name, final String style, final String[] options, final Configuration config) {
+    private ThrowableMaskPatternConvertor(final String name, final String style, final String[] options, final Configuration config) {
 
         super(name, style, options, config);
 
@@ -43,7 +40,7 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
     /**
      * Gets an instance of the class.
      *
-     * @param config
+     * @param config config
      * @param options pattern options, may be null.  If first element is "short",
      *                only the first line of the throwable will be formatted.
      * @return instance of class.
@@ -121,7 +118,8 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
             for (String oneMask : exceptionMasks) {
                 String indicator = oneMask + ":";
                 if (logs.contains(indicator)) {
-                    sb.append(logs.substring(0, logs.indexOf(indicator) + indicator.length() - 1));
+                    int position = logs.indexOf(indicator) + indicator.length() - 1;
+                    sb.append(logs, 0, position);
                     return true;
                 }
             }

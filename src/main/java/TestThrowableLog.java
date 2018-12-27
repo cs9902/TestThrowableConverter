@@ -9,8 +9,23 @@ public class TestThrowableLog {
         try {
             Integer.parseInt("abc");
         } catch (Throwable t) {
-            t.printStackTrace();
+//            t.printStackTrace();
             logger.error("error: ", t);
+        }
+
+        try {
+            test();
+        } catch (Exception e) {
+            logger.error("error2: ", e);
+        }
+
+    }
+
+    private static void test() throws Exception {
+        try {
+            Integer.parseInt("def");
+        } catch (Throwable t) {
+            throw new Exception("error2", t);
         }
     }
 
