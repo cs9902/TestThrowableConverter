@@ -1,3 +1,5 @@
+package com.kubeman.common.logs;
+
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.plugins.Plugin;
@@ -13,7 +15,7 @@ import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
 
-@Plugin(name = "ThrowableMaskPatternConvertor", category = PatternConverter.CATEGORY)
+@Plugin(name = "com.kubeman.common.logs.ThrowableMaskPatternConvertor", category = PatternConverter.CATEGORY)
 @ConverterKeys({ "exMask", "throwableMask", "exceptionMask" })
 public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
 
