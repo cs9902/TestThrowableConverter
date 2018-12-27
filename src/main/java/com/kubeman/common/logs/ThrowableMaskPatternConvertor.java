@@ -7,7 +7,6 @@ import org.apache.logging.log4j.core.impl.ThrowableFormatOptions;
 import org.apache.logging.log4j.core.pattern.ConverterKeys;
 import org.apache.logging.log4j.core.pattern.PatternConverter;
 import org.apache.logging.log4j.core.pattern.ThrowablePatternConverter;
-import org.apache.logging.log4j.core.util.Patterns;
 import org.apache.logging.log4j.util.Strings;
 
 import java.io.PrintWriter;
@@ -16,7 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(name = "com.kubeman.common.logs.ThrowableMaskPatternConvertor", category = PatternConverter.CATEGORY)
-@ConverterKeys({ "exMask", "throwableMask", "exceptionMask" })
+@ConverterKeys({"exMask", "throwableMask", "exceptionMask"})
 public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
 
     private String rawOption;
@@ -25,8 +24,9 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
 
     /**
      * Constructor.
-     * @param name Name of converter.
-     * @param style CSS style for output.
+     *
+     * @param name    Name of converter.
+     * @param style   CSS style for output.
      * @param options options, may be null.
      * @param config
      */
@@ -36,43 +36,6 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
 
         if (options != null && options.length > 0) {
             this.rawOption = options[0];
-        }
-
-        for (final String oneOption : options) {
-            if (oneOption != null) {
-                final String option = oneOption.trim();
-                if (option.startsWith("filters(") && option.endsWith(")")) {
-                    final  String filterStr = option.substring("filters(".length(), option.length() - 1);
-                    if (filterStr.length() > 0) {
-                        final String[] array = filterStr.split(Patterns.COMMA_SEPARATOR);
-                        if (array.length > 0) {
-                            for (String oneFilter : array) {
-                                if (oneFilter.startsWith("masks(") && oneFilter.endsWith(")")) {
-                                    final String maskStr = oneFilter.substring("masks(".length(), oneFilter.length() - 1);
-                                    if (maskStr.length() > 0) {
-                                        final String[] maskArray = maskStr.split("\\|");
-                                        if (maskArray.length > 0) {
-                                            for (String mask : maskArray) {
-                                                mask = mask.trim();
-                                                if (mask.length() > 0) {
-                                                    maskExceptions.add(mask);
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        List<String> ignorePackages = getOptions().getIgnorePackages();
-        for (String onPackage : ignorePackages) {
-            if (onPackage.startsWith("masks(") && onPackage.endsWith(")")) {
-                ignorePackages.remove(onPackage);
-            }
         }
 
     }
@@ -96,12 +59,18 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
     public void format(final LogEvent event, final StringBuilder buffer) {
         final Throwable t = event.getThrown();
 
-        if (isSubShortOption()) {
+        List<String> exceptionMasks = getOptions().getIgnorePackages();
+        if (exceptionMasks == null || exceptionMasks.isEmpty()) {
             super.format(event, buffer);
+        } else {
+            if (isSubShortOption()) {
+                super.format(event, buffer);
+            } else if (t != null && options.anyLines()) {
+                formatExceptionMasksOption(t, getSuffix(event), buffer);
+            }
         }
-        else if (t != null && options.anyLines()) {
-            formatOption(t, getSuffix(event), buffer);
-        }
+
+
     }
 
     private boolean isSubShortOption() {
@@ -113,7 +82,7 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
                 ThrowableFormatOptions.CLASS_NAME.equalsIgnoreCase(rawOption);
     }
 
-    private void formatOption(final Throwable throwable, final String suffix, final StringBuilder buffer) {
+    private void formatExceptionMasksOption(final Throwable throwable, final String suffix, final StringBuilder buffer) {
         final StringWriter w = new StringWriter();
 
         throwable.printStackTrace(new PrintWriter(w));
@@ -122,53 +91,43 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
             buffer.append(' ');
         }
 
-        String exceptionName = throwable.getClass().getCanonicalName();
-        if (!maskExceptions.contains(exceptionName)) {
+        final StringBuilder sb = new StringBuilder();
+        final String[] array = w.toString().split(Strings.LINE_SEPARATOR);
+        final int limit = options.minLines(array.length) - 1;
+        final boolean suffixNotBlank = Strings.isNotBlank(suffix);
 
-            if (!options.allLines() || !Strings.LINE_SEPARATOR.equals(options.getSeparator()) || Strings.isNotBlank(suffix)) {
-                final StringBuilder sb = new StringBuilder();
-                final String[] array = w.toString().split(Strings.LINE_SEPARATOR);
-                final int limit = options.minLines(array.length) - 1;
-                final boolean suffixNotBlank = Strings.isNotBlank(suffix);
+        for (int i = 0; i <= limit; ++i) {
 
-                for (int i = 0; i <= limit; ++i) {
-                    sb.append(array[i]);
-                    if (suffixNotBlank) {
-                        sb.append(' ');
-                        sb.append(suffix);
-                    }
-                    if (i < limit) {
-                        sb.append(options.getSeparator());
-                    }
-                }
-                buffer.append(sb.toString());
-
-            } else {
-                buffer.append(w.toString());
+            if (!isMaskException(array[i], sb)) {
+                sb.append(array[i]);
             }
-
-        } else {
-
-                final StringBuilder sb = new StringBuilder();
-                final String[] array = w.toString().split(Strings.LINE_SEPARATOR);
-                final int limit = options.minLines(array.length) - 1;
-                final boolean suffixNotBlank = Strings.isNotBlank(suffix);
-
-                sb.append(exceptionName).append(Strings.LINE_SEPARATOR);
-
-                for (int i = 1; i <= limit; ++i) {
-                    sb.append(array[i]);
-                    if (suffixNotBlank) {
-                        sb.append(' ');
-                        sb.append(suffix);
-                    }
-                    if (i < limit) {
-                        sb.append(options.getSeparator());
-                    }
-                }
-                buffer.append(sb.toString());
-
+            if (suffixNotBlank) {
+                sb.append(' ');
+                sb.append(suffix);
+            }
+            if (i < limit) {
+                sb.append(options.getSeparator());
+            }
         }
+        buffer.append(sb.toString());
+
     }
+
+    private boolean isMaskException(String logs, StringBuilder sb) {
+        List<String> exceptionMasks = getOptions().getIgnorePackages();
+        if (exceptionMasks == null || exceptionMasks.isEmpty()) {
+            return false;
+        } else {
+            for (String oneMask : exceptionMasks) {
+                String indicator = oneMask + ":";
+                if (logs.contains(indicator)) {
+                    sb.append(logs.substring(0, logs.indexOf(indicator) + indicator.length() - 1));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
 }
