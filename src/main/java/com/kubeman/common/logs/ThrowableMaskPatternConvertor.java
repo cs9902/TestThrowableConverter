@@ -45,16 +45,16 @@ public class ThrowableMaskPatternConvertor extends ThrowablePatternConverter {
      *                only the first line of the throwable will be formatted.
      * @return instance of class.
      */
-    public static ThrowableMaskPatternConvertor newInstance(final Configuration config, final String[] options) {
-        return new ThrowableMaskPatternConvertor("Throwable", "throwable", options, config);
-    }
+        public static ThrowableMaskPatternConvertor newInstance(final Configuration config, final String[] options) {
+            return new ThrowableMaskPatternConvertor("Throwable", "throwable", options, config);
+        }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public void format(final LogEvent event, final StringBuilder buffer) {
-        final Throwable t = event.getThrown();
+        /**
+         * {@inheritDoc}
+         */
+        @Override
+        public void format(final LogEvent event, final StringBuilder buffer) {
+            final Throwable t = event.getThrown();
 
         List<String> exceptionMasks = getOptions().getIgnorePackages();
         if (exceptionMasks == null || exceptionMasks.isEmpty()) {
